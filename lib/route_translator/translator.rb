@@ -68,6 +68,7 @@ module RouteTranslator
     end
 
     def self.display_locale?(locale)
+      !RouteTranslator.config.exclude_locale_from_paths &&
       !RouteTranslator.config.hide_locale && !RouteTranslator.native_locale?(locale) &&
         (!default_locale?(locale) ||
          RouteTranslator.config.force_locale ||
@@ -81,6 +82,15 @@ module RouteTranslator
 
     def self.default_locale?(locale)
       I18n.default_locale.to_sym == locale.to_sym
+    end
+
+    def self.add_locale_prefix?(locale)
+      return false if RouteTranslator.config.exclude_locale_from_paths
+
+      # Add locale prefix if it's not the default locale,
+      # or forcing locale to all routes,
+      # or already generating actual unlocalized routes
+      !default_locale?(locale) || RouteTranslator.config.force_locale || RouteTranslator.config.generate_unlocalized_routes
     end
 
     # Tries to translate a single path segment. If the path segment

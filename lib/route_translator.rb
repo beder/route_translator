@@ -15,7 +15,7 @@ module RouteTranslator
   Configuration = Struct.new(:force_locale, :hide_locale,
                              :generate_unlocalized_routes, :locale_param_key,
                              :generate_unnamed_unlocalized_routes,
-                             :host_locales)
+                             :host_locales, :exclude_locale_from_paths)
 
   def self.config(&block)
     @config                                     ||= Configuration.new
@@ -25,6 +25,7 @@ module RouteTranslator
     @config.locale_param_key                    ||= :locale
     @config.generate_unnamed_unlocalized_routes ||= false
     @config.host_locales                        ||= {}.with_indifferent_access
+    @config.exclude_locale_from_paths ||= false
     yield @config if block
     resolve_config_conflicts
     @config
