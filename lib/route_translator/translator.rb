@@ -43,10 +43,7 @@ module RouteTranslator
       final_optional_segments = new_path.slice!(/(\(.+\))$/)
       new_path = new_path.split("/").map{|seg| translate_path_segment(seg, locale)}.join('/')
 
-      # Add locale prefix if it's not the default locale,
-      # or forcing locale to all routes,
-      # or already generating actual unlocalized routes
-      if !default_locale?(locale) || RouteTranslator.config.force_locale || RouteTranslator.config.generate_unlocalized_routes
+      if add_locale_prefix?(locale)
         new_path = "/#{locale.to_s.downcase}#{new_path}"
       end
 
@@ -61,6 +58,15 @@ module RouteTranslator
 
     def self.default_locale?(locale)
       I18n.default_locale.to_sym == locale.to_sym
+    end
+
+    def self.add_locale_prefix?(locale)
+      return false if RouteTranslator.config.exclude_locale_from_paths
+
+      # Add locale prefix if it's not the default locale,
+      # or forcing locale to all routes,
+      # or already generating actual unlocalized routes
+      !default_locale?(locale) || RouteTranslator.config.force_locale || RouteTranslator.config.generate_unlocalized_routes
     end
 
     # Tries to translate a single path segment. If the path segment

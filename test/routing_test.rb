@@ -19,6 +19,7 @@ class TranslateRoutesTest < ActionController::TestCase
   def teardown
     config_force_locale false
     config_generate_unlocalized_routes false
+    config_exclude_locale_from_paths false
     config_default_locale_settings("en")
   end
 
@@ -351,6 +352,22 @@ class TranslateRoutesTest < ActionController::TestCase
 
     assert_routing '/en/people', :controller => 'people', :action => 'index', :locale => 'en'
     assert_routing '/people', :controller => 'people', :action => 'index'
+  end
+
+  def test_exclude_locale_from_paths
+    config_default_locale_settings 'en'
+    config_exclude_locale_from_paths true
+
+    draw_routes do
+      localized do
+        get 'people', :to => 'people#index', :as => 'people'
+      end
+    end
+
+    assert_routing '/people', :controller => 'people', :action => 'index', :locale => 'en'
+    assert_unrecognized_route '/en/people', :controller => 'people', :action => 'index', :locale => 'en'
+    assert_routing '/gente', :controller => 'people', :action => 'index', :locale => 'es'
+    assert_unrecognized_route '/es/gente', :controller => 'people', :action => 'index', :locale => 'es'
   end
 
   def test_config_translation_file
