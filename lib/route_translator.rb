@@ -10,13 +10,14 @@ module RouteTranslator
 
   TRANSLATABLE_SEGMENT = /^([-_a-zA-Z0-9]+)(\()?/.freeze
 
-  Configuration = Struct.new(:force_locale, :generate_unlocalized_routes, :translation_file, :locale_param_key, :exclude_locale_from_paths)
+  Configuration = Struct.new(:force_locale, :generate_unlocalized_routes, :translation_file, :locale_param_key, :generate_unnamed_unlocalized_routes, :exclude_locale_from_paths)
 
   def self.config(&block)
     @config ||= Configuration.new
     @config.force_locale ||= false
     @config.generate_unlocalized_routes ||= false
     @config.locale_param_key ||= :locale
+    @config.generate_unnamed_unlocalized_routes ||= false
     @config.exclude_locale_from_paths ||= false
     yield @config if block
     @config

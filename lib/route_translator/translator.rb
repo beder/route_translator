@@ -22,7 +22,13 @@ module RouteTranslator
 
     def self.translations_for(app, conditions, requirements, defaults, route_name, anchor, route_set, &block)
       add_untranslated_helpers_to_controllers_and_views(route_name, route_set.named_routes.module)
-      I18n.available_locales.each do |locale|
+      # Make sure the default locale is translated in last place to avoid
+      # problems with wildcards when default locale is omitted in paths. The
+      # default routes will catch all paths like wildcard if it is translated first
+      available_locales = I18n.available_locales.dup
+      available_locales.delete I18n.default_locale
+      available_locales.push I18n.default_locale
+      available_locales.each do |locale|
         new_conditions = conditions.dup
         new_conditions[:path_info] = translate_path(conditions[:path_info], locale)
         if new_conditions[:required_defaults] && !new_conditions[:required_defaults].include?(RouteTranslator.locale_param_key)
@@ -34,7 +40,11 @@ module RouteTranslator
         new_route_name = nil if new_route_name && route_set.named_routes.routes[new_route_name.to_sym] #TODO: Investigate this :(
         block.call(app, new_conditions, new_requirements, new_defaults, new_route_name, anchor)
       end
-      block.call(app, conditions, requirements, defaults, route_name, anchor) if RouteTranslator.config.generate_unlocalized_routes
+      if RouteTranslator.config.generate_unnamed_unlocalized_routes
+        block.call(app, conditions, requirements, defaults, nil, anchor)
+      elsif RouteTranslator.config.generate_unlocalized_routes
+        block.call(app, conditions, requirements, defaults, route_name, anchor)
+      end
     end
 
     # Translates a path and adds the locale prefix.
@@ -66,16 +76,16 @@ module RouteTranslator
       # Add locale prefix if it's not the default locale,
       # or forcing locale to all routes,
       # or already generating actual unlocalized routes
-      !default_locale?(locale) || RouteTranslator.config.force_locale || RouteTranslator.config.generate_unlocalized_routes
+      !default_locale?(locale) || RouteTranslator.config.force_locale || RouteTranslator.config.generate_unlocalized_routes || RouteTranslator.config.generate_unnamed_unlocalized_routes
     end
 
     # Tries to translate a single path segment. If the path segment
     # contains sth. like a optional format "people(.:format)", only
     # "people" will be translated, if there is no translation, the path
-    # segment is blank or begins with a ":" (param key), the segment
-    # is returned untouched
+    # segment is blank, begins with a ":" (param key) or "*" (wildcard),
+    # the segment is returned untouched
     def self.translate_path_segment segment, locale
-      return segment if segment.blank? or segment.starts_with?(":")
+      return segment if segment.blank? || segment.starts_with?(":") || segment.starts_with?("*")
 
       match = TRANSLATABLE_SEGMENT.match(segment)[1] rescue nil
 

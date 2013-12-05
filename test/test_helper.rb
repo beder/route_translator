@@ -43,6 +43,10 @@ module RouteTranslator
       RouteTranslator.config.generate_unlocalized_routes = boolean
     end
 
+    def config_generate_unnamed_unlocalized_routes(boolean)
+      RouteTranslator.config.generate_unnamed_unlocalized_routes = boolean
+    end
+
     def config_exclude_locale_from_paths(boolean)
       RouteTranslator.config.exclude_locale_from_paths = boolean
     end
